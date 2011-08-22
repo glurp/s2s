@@ -55,7 +55,7 @@ PROB_WATCH_BANNED=5 			# % : a banned site is respawn at prob of 5%
 MAX_SIZE_FILE=10*1000
 PORT_DEF=50500
 
-$pattern="**/*{rb,bng,gif,jpg,txt,md}"   # serveur side for Dir[$pattern]
+$pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for Dir[$pattern]
 $patterncli=/^[\w_][\w_\s\-\/]*\.(rb)|(png)|(gif)|(jpg)|(txt)|(md)$/i # client side verification before store
 
 ################################################################################
@@ -257,12 +257,12 @@ def run_p2p(shoes,pass,mode,lserver)
 
   serv=Serveur.new() # everybody is server
   if $Mode=="client"
-		9.times { |i| (DRb.start_service( "druby://:#{PORT_DEF+1+i}" ,serv);break) rescue nil  }
-		serv.init(false)   
-		Client.new().run
+	9.times { |i| (DRb.start_service( "druby://:#{PORT_DEF+1+i}" ,serv);break) rescue nil  }
+	serv.init(false)   
+	Client.new().run
   else
-		DRb.start_service( $servers[0] ,serv) # only servers have fixed ip
-		serv.init(true)   
+	DRb.start_service( $servers[0] ,serv) # only servers have fixed ip
+	serv.init(true)   
   end
 end
 

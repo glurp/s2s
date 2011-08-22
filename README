@@ -1,9 +1,10 @@
-
-= S2S
+S2S
+===
 
 peer 2 peer directory share, for ruby (Shoes) snipplets
 
-==Presentation
+Presentation
+============
 
 A simple p2p application, made for distribute little ruby applications.
 GUI is made with Green-Shoes
@@ -12,7 +13,8 @@ P2p part is based on an old 9 lines LOC shoed by _why.
 So this tool is made in souvenir of him.
 
 
-== Usage
+Usage
+=====
 
 Run a client with green-shoes Gui:
   > ruby s2s.rb
@@ -23,7 +25,8 @@ Run a client without gui: in CLI (no dependency, only ruby 1.9)
 Run a 'server' (no dependency , only ruby 1.9) :
   > ruby p2p.rb  shoerdev server  druby://<myip>/:50500  ...other serveurs....
 
-== Principes
+Principes
+=========
 
 The application try to maintain in each client the same directory content : 
 - sub directorys, 
@@ -44,7 +47,8 @@ A server is running at homeregis.dyndns.org, so by default, all client take this
 but anybody can run server, it will enter in the ring.
 
 
-== Requirements
+Requirements
+============
 
 Ruby (1.9.2 for gui), 
 
@@ -58,13 +62,15 @@ If firewall :
   
  Create a rule for autorisation on port 50500..50510 for TCP/UDP (for your process ruby)
 
-== Refs
+Refs
+====
 
 http://regisaubarede.posterous.com/tag/p2p
 
 https://github.com/ashbb/green_shoes
 
-= Status
+Status
+======
 
 In developpement, 
 
