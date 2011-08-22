@@ -1,7 +1,7 @@
-2S
-===
+S2S : Shoer to Shoers
+=====================
 
-peer 2 peer directory share, for ruby (Shoes) snippets
+Peer 2 peer directory share, for ruby (Shoes) snippets
 
 Presentation
 ============
@@ -16,14 +16,14 @@ So this tool is made in souvenir of him.
 Usage
 =====
 
-Run a client with green-shoes Gui:
+Run a client with green-shoes Gui (not ready yet!) :
   > ruby s2s.rb
 
 Run a client without gui: in CLI (no dependency, only ruby 1.9)
   > ruby p2p.rb
 
 Run a 'server' (no dependency , only ruby 1.9) :
-  > ruby p2p.rb  shoerdev server  druby://<myip>/:50500  ...other servers....
+  > ruby p2p.rb  shoerdev server  druby://<myip>/:50500  druby://homeregis.dyndns.org/:50500  ...other servers....
 
 Principles
 =========
