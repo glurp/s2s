@@ -32,31 +32,39 @@
 #
 #---------------------------------------------------------------------------------
 # Principes
-#    server(s) maintain tje liste of clients presents on the net
+#    server(s) maintain a liste of clients presents on the net
 #    clients   annouce on server(s) and share files with others clients
-#       * a file is copied if it existe on one client and not on my host
-#        (transfert decision is only on filename existence, no (not yet) mtime check
-#    peer ip liste ares arbitrary limited to 50 known peer
+#       * file transfert decision on (locl exist) or (time based)
+#    peer ip liste ares arbitrary limited to 100 known peer
 #    after a long time, files systems should be stabilised : all peer will have the sames
 #      files on there share directory ...
 #
+# precautions:
+#		too much files in list
+#		too big files
+#		too much client
+#		too many file from one peer
+#		too old files (!)
+#
 # Issues
 #   $container (liste of peer) and $proxy should be threaded synchronized
-#   make a dir cache?
 #   Shoes (if use) must support threading !!
 #
 ################################################################################
 
-MAX_PEER_KNOWN=100
-PERIOD_WATCH_PEERS_OTHERS=60
-PERIODE_GET_LIST_AND_FILE=10
+MAX_PEER_KNOWN=100				# server side : trnsmit only 100 first peer in current list
+PERIOD_WATCH_PEERS_OTHERS=60	# any side 
+PERIODE_GET_LIST_AND_FILE=10	# client side
+TEMPO_GETDIR=60					# serveur side : scan local dir each 60 seconds (mini,on demand)
 PROB_READDIR_PEER_PERCENT=30	# % : each 10secs , get distant dir if xx% lucky
 PROB_WATCH_BANNED=5 			# % : a banned site is respawn at prob of 5%
-MAX_SIZE_FILE=10*1000
-PORT_DEF=50500
+MAX_SIZE_FILE=10*1000			# any side : for make dir list and before memorize file
+PORT_DEF=50500					# tcp port for server, +1... for clients
+MAX_FILE_FROM_ONE_PEER=1000		# client side 
+MAX_OLD_FILE=90*24*3600			# serveur side : do not transmit old files (?...)
+MARKEUR_ANNOUNCE=/#\s*P2P_ANNOUNCE([^)]+)/"  # client side, extracted from sources file for gui
 
-$pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for Dir[$pattern]
-$pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for Dir[$pattern]
+$pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for scan local dir
 $patterncli=/^[\w_][\w_\s\-\/]*\.(rb)|(png)|(gif)|(jpg)|(txt)|(md)$/i # client side verification before store
 
 ################################################################################
@@ -114,7 +122,16 @@ class Serveur
   end
   end
   def getdir(filter)
-	Dir[filter].map { |f|  [ f , File.mtime(f).to_i ] }
+	now=Time.now
+	if (! defined?(@last_dir_time)) || (@last_dir_time[0]+TEMPO_GETDIR) < now
+	  l=Dir[filter].map { |f|  
+		[ f , File.mtime(f).to_i ] if File.size(f) <= MAX_SIZE_FILE && (File.mtime(f)+MAX_OLD_FILE) > now
+	  }[0..2*MAX_FILE_FROM_ONE_PEER]
+	  @last_dir_time=[Time.now+(Time.now-now)*10,l]
+	  l
+	else
+	  @last_dir_time[1]
+	end
   end
   def init(is_server)
     Thread.new {
@@ -229,23 +246,29 @@ class Client
     filelist.each do |f,time|
 	  if f !~ $patterncli
 		log "File name has strange type : #{f}, banning #{n}"
-		#@ban[n]=1
+		#@ban[n]=Time.now
 		return
 	  end
     end
+	nbfiles=0
     filelist.each do |f,time|
+	  (@ban[n]=Time.now;break) if nbfiles>MAX_FILE_FROM_ONE_PEER
       if (! File.exists?(f)) || File.mtime(f).to_i<time
+		nbfiles+=1
         content= proxy(n).fserver(sign(""),f,:getfile)
         if  content.size > MAX_SIZE_FILE 
 			log "received file #{f} too big: #{content.size/1024} KB from #{n}"
-			content="#file too big for S2S"
+			content="#file too big for S2S : original size=#{content.size} B !"
 		end
 		dir=File.dirname(f)
 		(log "create dir #{dir}" ; mkdir(dir)) unless File.directory?(dir)
-        log "gets #{f}          from #{n}" 
-		File.open(f,"w") {|o| o.print(content) }    
-        t=Time.at(time)
-		File.utime(t,t,f)
+		if (! File.exists?(f)) || File.mtime(f).to_i<time
+			log "gets #{f}          from #{n}" 
+			File.open(f,"w") {|o| o.print(content) }    
+			t=Time.at(time)
+			File.utime(t,t,f)
+			log("from #{f} : #{$1}")  if content.match(MARKEUR_ANNOUNCE) && $1!~/\[/
+		end
       end
     end
   rescue Exception => e
