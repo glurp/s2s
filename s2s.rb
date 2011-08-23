@@ -1,10 +1,28 @@
 require 'green_shoes'
 #require './p2p.rb'
 
+###########################  Patch fg() bg() for permission to use string color
+class Shoes
+  class App
+    [[:bg, :background], [:fg, :foreground]].each do |m, tag|
+      define_method m do |*str|
+        color = str.pop
+        str = str.join
+		unless String===color # <<<
+			rgb = "#"+(color[0, 3].map{|e| (e*255.0).to_i}.map{|i| sprintf("%#02X", i)[-2,2]}.join)
+		else
+			rgb=color # <<<
+		end
+        "<span #{tag}='#{rgb}'>#{str}</span>"
+      end
+    end
+  end
+end
+
 ######################" Patch ChipMunk : destroy a shape....
 
 #---------- append shap to attribute
-
+begin
 ChipMunk # load file (ext are autoloaded by greeen shoes)
 module ChipMunk
   def spy
@@ -51,15 +69,16 @@ class Blackboard  < Shoes::Widget
 
       #------- border drawing area
 
-	  line    0,100 ,600,100,    stroke: "#A0E0E0",strokewidth: 1
 	  cp_line 0,100, 0,484 ,      stroke: "#204040"
 	  cp_line 600,484, 600,100,   stroke: "#204040"
 	  cp_line 0,480 ,600,480,    stroke: "#205050" ,strokewidth: 2
+	  
 	  line 0,484 ,600,484,    stroke: "#A0E0E0",strokewidth: 2
+	  line    0,100 ,600,100,    stroke: "#A0E0E0",strokewidth: 1
 	  
 	  d=24
 	  cp_oval 100,d+450, 60,        fill: "#E3EB70" ,  stroke: "#EBEB70"
-	  line    0,d+480,200,d+480,      stroke: "#FFFFFF" ,strokewidth: 40
+	  line    0,d+480,200,d+480,      stroke: "#E0E0E0" ,strokewidth: 40
 
 	  nostroke
 
@@ -70,9 +89,9 @@ class Blackboard  < Shoes::Widget
 
 	  200.times { balls <<  [0,drop_ball() ] }
 	  animate(10) do
-			balls <<  [0,drop_ball() ] while balls.size<150 if (balls.size<70)
-			declare("#{200+(Time.now.to_f*10).round%10}")
-			destroy("#{200+(Time.now.to_f*10+1).round%10}")
+			balls <<  [0,drop_ball() ] while balls.size<350 if (balls.size<70)
+			#declare("#{200+(Time.now.to_f*10).round%10}")
+			#destroy("#{200+(Time.now.to_f*10+1).round%10}")
 	  end
 	  animate(7) do
 		unless $statusb.is_suspend
@@ -106,9 +125,27 @@ class Blackboard  < Shoes::Widget
   end
   def destroy(ip)
 	return unless @ip[ip]
-	@ip[ip].remove rescue nil
+	@ip[ip].style fill: "#606060" 
 	@ip.delete(ip)
   end
+end
+
+rescue Exception  => e
+	puts " |   "+e.to_s + "\n  "+ e.backtrace.join("\n |     ")
+	 ############## no chipmunk 
+	class Blackboard  < Shoes::Widget
+	  def initialize()
+		stack margin: 50, left: -1, top: -1 do
+			title
+			@a=para fg(<<EEND,"#DDCC88")
+If you have ChipMunk (2D space engine physique simulator) 
+thank you to put 'chipmunk.so' library  in green-shoes dev project !
+But S2S can work without it :)
+EEND
+			timer(10) { @a.text=""}
+		end
+	  end
+	end
 end
 
 class MyButton < Shoes::Widget
@@ -135,10 +172,10 @@ class StatusBarr < Shoes::Widget
 		@nbpeer=0
 		@is_suspend=false
 		background "#506060"
-		flow width: 600, height: 20  do
-			background white
+		flow width: 600, height: 20, fill: "#E0E0E0" do
+			background "#E0E0E0"
 			inscription "    Nb Files :  "   ,stroke: "#E0E0E0" , width: 100 ,fill: "#909090"
-			@nbf=inscription   '---'         ,stroke: "#000000" , width: 50
+			@nbf=inscription   'xxxxxxxx'    ,stroke: "#909090" , width: 50  ,fill: "#E0E0E0"
 			inscription "    Nb Shoers : "   ,stroke: "#E0E0E0" , width: 100,fill: "#909090"
 			@nbp=inscription '99'            ,stroke: "#000000" , width: 50
 			inscription "    State :  "      ,stroke: "#E0E0E0" , width: 100,fill: "#909090"
@@ -148,7 +185,7 @@ class StatusBarr < Shoes::Widget
     end
 	def nbfiles=(v)
 		sv=v.to_s
-		(@nbf.text= sv;p sv) if sv!=@nbfiles
+		@nbf.text= bg(fg(sv, "#909090"),"#E0E0E0") if sv!=@nbfiles
 		@nbfiles=sv
 	end
 	def nbpeer=(v)
@@ -180,5 +217,5 @@ Shoes.app title: 'S2S Shoes share code !' do
 		stack height: 385 do bl=blackboard end
 		stack height: 100  do status_barr( 482 ) end
 	end
-	puts "\n"*66
+	puts "\n"*6
 end
