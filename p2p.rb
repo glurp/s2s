@@ -252,7 +252,14 @@ class Client
 	t "     "+$!.to_s+ " "+ $!.backtrace[0..1].join(" < ")
   end
 end
+require 'socket'
 
+def get_public_ip()
+  UDPSocket.open do |s|
+    s.connect '208.80.152.2', 1 # wikipedia, connection don't need effective
+    s.addr.last
+  end
+end
 $Password=""
 $Mode=""
 require 'socket'
@@ -272,7 +279,7 @@ def run_p2p(shoes,pass,mode,lserver)
   Socket.do_not_reverse_lookup=true
   serv=Serveur.new() # everybody is server
   if $Mode=="client"
-	9.times { |i| (DRb.start_service( "druby://#{get_local_ip()}:#{PORT_DEF+1+i}" ,serv);break) rescue nil  }
+	9.times { |i| (DRb.start_service( "druby://#{get_public_ip()}:#{PORT_DEF+1+i}" ,serv);break) rescue nil ; puts "retry #{get_public_ip()}" }
 	serv.init(false)   
   else
 	DRb.start_service( $servers[0] ,serv) # only servers have fixed ip
