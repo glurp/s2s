@@ -64,8 +64,8 @@ MAX_FILE_FROM_ONE_PEER=1000		# client side
 MAX_OLD_FILE=90*24*3600			# serveur side : do not transmit old files (?...)
 MARKEUR_ANNOUNCE=/#\s*P2P_ANNOUNCE([^)]+)/"  # client side, extracted from sources file for gui
 
-$pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for scan local dir
-$patterncli=/^[\w_][\w_\s\-\/]*\.(rb)|(png)|(gif)|(jpg)|(txt)|(md)$/i # client side verification before store
+$pattern="**/*{rb,png,gif,jpg,txt,md,pdf,html,js,sass,svg,ru,yml,xml}"   # serveur side for scan local dir
+$patterncli=/^[\w_][\w_\s\-\/]*\.(rb)|(png)|(gif)|(jpg)|(txt)|(md)|(pdf)|(html)|(js)|(sass)|(svg)|(ru)|(yml)|(xml)$/i # client side verification before store
 
 ################################################################################
 require'drb';
