@@ -45,7 +45,7 @@
 #		too much client
 #		too many file from one peer
 #		too old files (!)
-#
+# 
 # Issues
 #   $container (liste of peer) and $proxy should be threaded synchronized
 #   Shoes (if use) must support threading !!
