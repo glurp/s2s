@@ -56,6 +56,7 @@ MAX_SIZE_FILE=10*1000
 PORT_DEF=50500
 
 $pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for Dir[$pattern]
+$pattern="**/*{rb,png,gif,jpg,txt,md}"   # serveur side for Dir[$pattern]
 $patterncli=/^[\w_][\w_\s\-\/]*\.(rb)|(png)|(gif)|(jpg)|(txt)|(md)$/i # client side verification before store
 
 ################################################################################
@@ -120,7 +121,9 @@ class Serveur
     
       add_peers([ DRb.uri ])      
       first_discover_other_peer(is_server)
-      
+	  log "i am #{DRb.uri}, create Client part..."
+      Client.new().run unless is_server
+
       ############### watch presence of known peer and get there known peer list
       loop {
         sleep PERIOD_WATCH_PEERS_OTHERS
@@ -131,21 +134,24 @@ class Serveur
    private
   def first_discover_other_peer(is_server)
       loop {
+        log "finding almost one server..."
         $servers[(is_server ? 1:0)..-1].each do |serv|
           add_peers( proxy(serv).fserver( sign(""),[DRb.uri],:getmembers )  ) rescue p $!
         end
         break if $container.size>1
         break if is_server
         sleep 10
-        log "finding almost one server..."
       } 
-      log "#{$container.size-1} Server(s) is discovered"
+	  if $container.size<=1
+		log "I am alone as server"
+	  else
+		log "#{$container.size-1} Server(s) is discovered"
+	  end
   end
 
   def whatch_presence_peers(is_server)
     lcont=$container
     touched = false
-	(log "Mute" ; $container << DRb.uri) unless $container.index(DRb.uri) # self uri can change
     lcont.dup.flatten.each { |n| 
       next if n==DRb.uri
       begin
@@ -249,17 +255,25 @@ end
 
 $Password=""
 $Mode=""
+require 'socket'
+
+def get_local_ip()
+  UDPSocket.open do |s|
+    s.connect '64.233.187.99', 1
+    s.addr.last
+  end
+end
 
 def run_p2p(shoes,pass,mode,lserver)
   $Password=pass
   $Mode=mode        # type: client/server
   $servers=lserver  # serveur
-
+  
+  Socket.do_not_reverse_lookup=true
   serv=Serveur.new() # everybody is server
   if $Mode=="client"
-	9.times { |i| (DRb.start_service( "druby://:#{PORT_DEF+1+i}" ,serv);break) rescue nil  }
+	9.times { |i| (DRb.start_service( "druby://#{get_local_ip()}:#{PORT_DEF+1+i}" ,serv);break) rescue nil  }
 	serv.init(false)   
-	Client.new().run
   else
 	DRb.start_service( $servers[0] ,serv) # only servers have fixed ip
 	serv.init(true)   
@@ -267,7 +281,6 @@ def run_p2p(shoes,pass,mode,lserver)
 end
 
 if __FILE__==$0 
-  Thread.abort_on_exception=true
   if ARGV.size==0
 	ARGV << "shoerdev"
 	ARGV << "client"
@@ -277,6 +290,7 @@ if __FILE__==$0
   mode=    ARGV.shift  # type: client/server
   servers=ARGV        # serveur
 
+  Thread.abort_on_exception=true
   run_p2p(nil,password,mode,servers)
   sleep
 end

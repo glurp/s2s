@@ -39,6 +39,7 @@ end
 class Blackboard  < Shoes::Widget
   include ChipMunk
   def initialize()
+	  @ip={}
 	  space = cp_space
 	  balls = []
 	  nofill
@@ -47,13 +48,18 @@ class Blackboard  < Shoes::Widget
 	  cp_line 250, 450, 300, 452, stroke: "#806060"
 	  cp_line 300, 452, 500, 454, stroke: "#806060"
 
-	  cp_oval 100,400, 40,        fill: "#E3EB70" ,  stroke: "#EBEB70"
 
       #------- border drawing area
 
-	  cp_line 0,0, 0,480 ,      stroke: "#204040"
-	  cp_line 0,482 ,600,482,    stroke: "#A0E0E0"
-	  cp_line 600,480, 600,0,   stroke: "#204040"
+	  line    0,100 ,600,100,    stroke: "#A0E0E0",strokewidth: 1
+	  cp_line 0,100, 0,484 ,      stroke: "#204040"
+	  cp_line 600,484, 600,100,   stroke: "#204040"
+	  cp_line 0,480 ,600,480,    stroke: "#205050" ,strokewidth: 2
+	  line 0,484 ,600,484,    stroke: "#A0E0E0",strokewidth: 2
+	  
+	  d=24
+	  cp_oval 100,d+450, 60,        fill: "#E3EB70" ,  stroke: "#EBEB70"
+	  line    0,d+480,200,d+480,      stroke: "#FFFFFF" ,strokewidth: 40
 
 	  nostroke
 
@@ -63,8 +69,10 @@ class Blackboard  < Shoes::Widget
 	  #spy
 
 	  200.times { balls <<  [0,drop_ball() ] }
-	  every(5) do
-			balls <<  [0,drop_ball() ] while balls.size<70
+	  animate(10) do
+			balls <<  [0,drop_ball() ] while balls.size<150 if (balls.size<70)
+			declare("#{200+(Time.now.to_f*10).round%10}")
+			destroy("#{200+(Time.now.to_f*10+1).round%10}")
 	  end
 	  animate(7) do
 		unless $statusb.is_suspend
@@ -82,6 +90,24 @@ class Blackboard  < Shoes::Widget
 	  x0,y0=110,50
 	  color= rgb((50+((rand(100)<10) ? rand(200) : rand(30))).to_i ,100+rand(140),200+rand(40)) 
       cp_oval(x0+rand(30), y0+rand(40), 2+rand(4), { fill: color })
+  end
+  def declare(ip,&blk)
+	return if @ip[ip]
+	col=@ip.size/25
+	lig=@ip.size%25
+	x=580-21*col; y=105+10*lig
+	@ip[ip]=rect x,y,20,9, fill: "#BB3030"
+	t=Time.now
+	if blk
+	  @ip[ip].click { blk.call }
+	else
+	  @ip[ip].click { alert("Apparition of #{ip} at #{t}") }
+	end
+  end
+  def destroy(ip)
+	return unless @ip[ip]
+	@ip[ip].remove rescue nil
+	@ip.delete(ip)
   end
 end
 
@@ -110,13 +136,14 @@ class StatusBarr < Shoes::Widget
 		@is_suspend=false
 		background "#506060"
 		flow width: 600, height: 20  do
-			background black
-			inscription "Nb Files : ",stroke: "#D0D0D0" , width: 70, margin_left: 10
-			@nbf=para   '------------------'    ,stroke: "#F0F0F0" , width: 100, fill: red
-			inscription "Nb Shoers : ",stroke: "#D0D0D0" , width: 90, margin_left: 10
-			@nbp=inscription '99'        ,stroke: "#F0F0F0" , width: 100, fill: "#A0A0A0"
-			inscription "State : "   ,stroke: "#D0D0D0" , width: 60, margin_left: 10
-			@iss=inscription 'ON'        ,stroke: "#F0F0F0" , width: 50, fill: "#A0A0A0"
+			background white
+			inscription "    Nb Files :  "   ,stroke: "#E0E0E0" , width: 100 ,fill: "#909090"
+			@nbf=inscription   '---'         ,stroke: "#000000" , width: 50
+			inscription "    Nb Shoers : "   ,stroke: "#E0E0E0" , width: 100,fill: "#909090"
+			@nbp=inscription '99'            ,stroke: "#000000" , width: 50
+			inscription "    State :  "      ,stroke: "#E0E0E0" , width: 100,fill: "#909090"
+			@iss=inscription 'ONLINE'        ,stroke: "#000000" , width: 100
+			inscription '_________________'   ,stroke: "#909090" , width: 100,fill: "#909090"
 		end
     end
 	def nbfiles=(v)
@@ -129,7 +156,7 @@ class StatusBarr < Shoes::Widget
 		@nbpeer=v.to_s
 	end
 	def is_suspend=(v)
-		@iss.text=v.to_s if v!=is_suspend
+		@iss.text=v ?  "OFFLINE" : "ONLINE" if v!=is_suspend
 		@is_suspend=v
 	end
 end
@@ -140,7 +167,8 @@ Shoes.app title: 'S2S Shoes share code !' do
 		background "#204040".."#205050" 
 		fill "#909090"
 		stack height: 100  do
-			background "#50A0A0".."#507070" 
+			#background "#50A0A0".."#507070" 
+			background "#70C0C0".."#70A0A0" 
 			my_button(180,10,"Configuration")   { alert("CouCoue") }
 			my_button(320,10,"Repos.")   { alert($statusb.nbfiles);  $statusb.nbfiles=999 ;}
 			my_button(320,40,"Pause")    { $statusb.is_suspend=true }
