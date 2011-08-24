@@ -40,7 +40,6 @@ module ChipMunk
     oval opts
   end
 end
-
 #----------  create methode cp_remove, which destroy in shoes AND in ChipMunk 
 
 Shoes::ShapeBase.class_eval do
@@ -50,7 +49,6 @@ Shoes::ShapeBase.class_eval do
 	self.remove
   end
 end
-
 ####################### Physique space : a shape is a file which arrive by p2p
 
 
@@ -87,17 +85,24 @@ class Blackboard  < Shoes::Widget
 	  #p space.gravity= vec2(5,10)
 	  #spy
 
-	  200.times { balls <<  [0,drop_ball() ] }
-	  animate(10) do
-			balls <<  [0,drop_ball() ] while balls.size<350 if (balls.size<70)
-			#declare("#{200+(Time.now.to_f*10).round%10}")
-			#destroy("#{200+(Time.now.to_f*10+1).round%10}")
+	  100.times { balls <<  [0,drop_ball() ] }
+	  animate(3) do
+			balls <<  [0,drop_ball() ] while balls.size<150 if (balls.size<70)
+			declare("#{200+(Time.now.to_f*10).round%100}")
+			mask("#{200+(Time.now.to_f*10+1).round%100}")
 	  end
 	  animate(7) do
 		unless $statusb.is_suspend
 			10.times { space.step 0.05 }
 			r=[]
-			balls.each{|no,ball|  ball.cp_move; (no<100 || ball.top<460 ) ? (r << [no+1,ball])  : ball.cp_remove(space) }
+			balls.each do |generation,ball|  
+				ball.cp_move
+				if generation>100 && ball.top>468 
+					ball.cp_remove(space)  
+				else
+					r << [generation+1,ball]
+				end
+			end
 			balls=r
 			#p [r.size,r[0][0],r[0][1].top,$statusb.nbfiles]  rescue nil
 			$statusb.nbfiles=balls.size
@@ -111,10 +116,10 @@ class Blackboard  < Shoes::Widget
       cp_oval(x0+rand(30), y0+rand(40), 2+rand(4), { fill: color })
   end
   def declare(ip,&blk)
-	return if @ip[ip]
+	(@ip[ip].style fill: "#BB3030";return) if @ip[ip]
 	col=@ip.size/25
 	lig=@ip.size%25
-	x=580-21*col; y=105+10*lig
+	x=580-21*col; y=101+10*lig
 	@ip[ip]=rect x,y,20,9, fill: "#BB3030"
 	t=Time.now
 	if blk
@@ -123,10 +128,10 @@ class Blackboard  < Shoes::Widget
 	  @ip[ip].click { alert("Apparition of #{ip} at #{t}") }
 	end
   end
-  def destroy(ip)
+  def mask(ip)
 	return unless @ip[ip]
 	@ip[ip].style fill: "#606060" 
-	@ip.delete(ip)
+	#@ip.delete(ip) # delete in hash
   end
 end
 
@@ -151,7 +156,7 @@ end
 class MyButton < Shoes::Widget
   def initialize(left,top,text)
 	r = rect       left,          top,      120,25,  fill: "#607070".."#80A0A0", strokewidth: 1, curve: 10, stroke: black
-	p= para  text, left: left+10, top: top+4      ,  stroke: "#D0D0D0"
+	p= para  text, left: left+10, top: top+4      ,  stroke: "#E0E0E0"
 
 	style(width: 140, height: 80)
 	style(left: left, top: top, width: 140, height: 80)

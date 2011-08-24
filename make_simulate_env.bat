@@ -21,7 +21,7 @@ touch TEST/T3/Y.png
 
 
 cd TEST
-cd T1 && start "server"  cmd /k "ruby ../../p2p.rb shoesdev server druby://localhost:50500"
+cd T1 && start "server"  cmd /k "ruby ../../p2p.rb shoesdev server druby://0.0.0.0:50500"
 cd ..
 cd T2 && start "client1" cmd /k "ruby ../../p2p.rb shoesdev client druby://localhost:50500"
 cd ..
