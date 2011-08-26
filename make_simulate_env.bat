@@ -21,11 +21,11 @@ touch TEST/T3/Y.png
 
 
 cd TEST
-cd T1 && start "server"  cmd /k "ruby ../../p2p.rb shoesdev server druby://0.0.0.0:50500"
+cd T1 && start "server"  cmd /k "ruby ../../p2p.rb shoerdev server druby://10.177.235.49:50500"
 cd ..
-cd T2 && start "client1" cmd /k "ruby ../../p2p.rb shoesdev client druby://localhost:50500"
+cd T2 && start "client1" cmd /k "ruby ../../p2p.rb shoerdev client druby://10.177.235.49:50500"
 cd ..
-cd T3 && start "client2" cmd /k "ruby ../../p2p.rb shoesdev client druby://localhost:50500"
+cd T3 && start "client2" cmd /k "ruby ../../p2p.rb shoerdev client druby://10.177.235.49:50500"
 cd ..
 cd ..
 sleep 10

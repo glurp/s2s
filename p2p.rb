@@ -69,42 +69,53 @@ $patterncli=/^[\w_][\w_\s\-\/]*\.(rb)|(png)|(gif)|(jpg)|(txt)|(md)|(pdf)|(html)|
 
 ################################################################################
 require'drb';
+require 'socket'
 require 'fileutils'
 require 'timeout'
 
 $container=[]
 $proxy={}
 
-module P2P_shoes
-  def fbasename(p) p.gsub(/^\//,"blurp").gsub('..',"bleurp")  end
-  def mkdir(d)     FileUtils.mkdir_p(d) end
-  def proxy(u)     $proxy[u] || ( $proxy[u]=DRbObject.new((),u)) 		 	end
-  def sign(data)   [$Password,data].join('/') 									end # !!! TODO sha?
-  def shoes?()     defined?(Shoes) && Shoes.app.respond_to?(:s2s_notify) && Shoes.app	end 
-  def sending(f,client)		shoes?() && shoes?().s2s_notify(:sending,f,client)	end
-  def receiving(f,client)	shoes?() && shoes?().s2s_notify(:receiving,f,client) end
-  def suspended?()			shoes?() && shoes?().is_suspended?()				end
-  def discover(client)		shoes?() && shoes?().s2s_notify(:discover,f,client) end
-  def forget(client)		shoes?() && shoes?().s2s_notify(:forget,"",client)end
+module GUI_interface
+  #--------------- Callback to GUI ----------------------  
+  # p2p is run by > Objetct.run_p2p(shoes,pass,mode,lserver) by 'parent'
+  # then this callback is called by p2p to parent
+  
+  def sending(f)			end
+  def receiving(f,client)	end
+  def suspended?()			end
+  def discover(client)		end
+  def forget(client)		end
+  def update_nbfile(n)		end
   def log(*txt)
     puts("%-8s | %29s | %-3s | %s" % [Time.now.strftime("%H:%M:%S"),DRb.uri,self.class.to_s[0..3],txt.join(' ')]) unless txt[0][0,1]==" "
   end
-  def t(*txt)    log(txt.map {|a| a.inspect}.join(", ")[0..100]) end
+end
+
+module Common
+  include GUI_interface
+  def fbasename(p) p.gsub(/^\//,"blurp").gsub('..',"bleurp")	end
+  def mkdir(d)     FileUtils.mkdir_p(d) 						end
+  def proxy(u)     $proxy[u] || ( $proxy[u]=DRbObject.new((),u)) end
+  def sign(data)   [$Password,data].join('/') 					end # !!! TODO sha?
+  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) ; txt[0] end
+  
 end
 
 class Serveur
-  include P2P_shoes
+  include Common
   def fserver(c,param,action) 
-  t [c,action,"   ",param]
+  tr [c,action,"   ",param]
   begin
     if c==sign("")
       case action 
          when :getdir     
-           (log(" Send dir #{param}...") ; $Mode=="client" ? getdir(param) : nil )
+           tr $Mode=="client" ? getdir(param) : nil 
          when :getfile    
-           (log("Send file #{param}..."); File.read( fbasename(param) ) )
+           sending(param)
+		   File.read( fbasename(param) ) 
          when :getmembers 
-          add_peers(param)[0..MAX_PEER_KNOWN]
+          tr add_peers(param)[0..MAX_PEER_KNOWN]
          when :geturi 
           [DRb.uri]
          when :test
@@ -124,11 +135,16 @@ class Serveur
   def getdir(filter)
 	now=Time.now
 	if (! defined?(@last_dir_time)) || (@last_dir_time[0]+TEMPO_GETDIR) < now
-	  l=Dir[filter].map { |f|  
-		[ f , File.mtime(f).to_i ] if File.size(f) <= MAX_SIZE_FILE && (File.mtime(f)+MAX_OLD_FILE) > now
-	  }[0..2*MAX_FILE_FROM_ONE_PEER]
-	  @last_dir_time=[Time.now+(Time.now-now)*10,l]
-	  l
+	  # list files good size and not too old
+	  list=Dir[filter].select { |f|  
+		File.size(f) <= MAX_SIZE_FILE && (File.mtime(f)+MAX_OLD_FILE) > now
+	  }.map { |file| [ file,File.mtime(file).to_i ] }
+	  
+	  # send only most recent (if file list is too big)
+	  list=list.sort {|a,b| b[1]<=>a[1] }[0..2*MAX_FILE_FROM_ONE_PEER]
+	  @last_dir_time=[Time.now+(Time.now-now)*10,list]
+	  update_nbfile(list.size)
+	  list
 	else
 	  @last_dir_time[1]
 	end
@@ -175,6 +191,7 @@ class Serveur
         add_peers(proxy(n).fserver( sign(""),$container,:getmembers ))
       rescue
         log "Discard #{n}"
+		forget(n.to_s)
         log $!.to_s+ " "+  $!.backtrace[0..2].join(" < ")
         lcont.delete(n)
         touched = true
@@ -188,7 +205,7 @@ class Serveur
 	Thread.new(peers0) { |peers|
 		l=peers.flatten.select{ |elem| (! $container.index(elem) ) && ok_drb(elem) } 
 		if l.size>0
-		  l.each {|elem| log "Discovered #{elem}" }
+		  l.each {|elem| log "Discovered #{elem}" ; discover(elem.to_s) }
 		  $container=$container.push(*(peers.flatten)).uniq
 		end
 	} if peers0.size>0
@@ -196,17 +213,19 @@ class Serveur
   end  
 
   def ok_drb(uri)
-	log "Test accesiblility #{uri}..."
+	log "Test access #{uri}..."
     timeout(5) { proxy(uri).fserver( sign(""),"",:test) }
 	true
   rescue Exception => e
-	t e,e.backtrace
+    log "Onaccessible #{uri} ! : " + e.to_s
 	false
   end
 end
 
+###################################### Cient ##########################################
+
 class Client
-  include P2P_shoes
+  include Common
   def initialize()
     @iam=proxy(DRb.uri).fserver( sign(""),[],:geturi)[0]
     log "I am #{@iam}"
@@ -226,7 +245,7 @@ class Client
 
          @ban.delete(n)
          #log "Consult #{n}... "
-         directory_transfert(n)
+         directory_transfert(n) unless suspended?()
         rescue
 			log "peer #{n} seem to be down"
 			log "     "+$!.to_s+ " "+ $!.backtrace[0..1].join(" < ")
@@ -251,10 +270,12 @@ class Client
 	  end
     end
 	nbfiles=0
+	p filelist
     filelist.each do |f,time|
 	  (@ban[n]=Time.now;break) if nbfiles>MAX_FILE_FROM_ONE_PEER
-      if (! File.exists?(f)) || File.mtime(f).to_i<time
+      if !  suspended?() && ( (! File.exists?(f)) || File.mtime(f).to_i<time )
 		nbfiles+=1
+		receiving(f,n.to_s)
         content= proxy(n).fserver(sign(""),f,:getfile)
         if  content.size > MAX_SIZE_FILE 
 			log "received file #{f} too big: #{content.size/1024} KB from #{n}"
@@ -283,18 +304,10 @@ def get_public_ip()
     s.addr.last
   end
 end
-$Password=""
-$Mode=""
-require 'socket'
 
-def get_local_ip()
-  UDPSocket.open do |s|
-    s.connect '64.233.187.99', 1
-    s.addr.last
-  end
-end
 
-def run_p2p(shoes,pass,mode,lserver)
+
+def run_p2p(pass,mode,lserver)
   $Password=pass
   $Mode=mode        # type: client/server
   $servers=lserver  # serveur
@@ -321,6 +334,8 @@ if __FILE__==$0
   servers=ARGV        # serveur
 
   Thread.abort_on_exception=true
-  run_p2p(nil,password,mode,servers)
+  run_p2p(password,mode,servers)
   sleep
+else
+ puts "p2p.rb loaded!"
 end

@@ -1,4 +1,6 @@
 require 'green_shoes'
+require 'fileutils'
+require 'thread'
 #require './p2p.rb'
 
 ###########################  Patch fg() bg() for permission to use string color
@@ -49,12 +51,16 @@ Shoes::ShapeBase.class_eval do
 	self.remove
   end
 end
+##################### END patchs chipmunk/green shoes
+
 ####################### Physique space : a shape is a file which arrive by p2p
 
 
 class Blackboard  < Shoes::Widget
   include ChipMunk
-  def initialize()
+  def initialize( is_simulation = true)
+	  @nbfile_pop=0
+	  @nbfile_push=2
 	  @ip={}
 	  space = cp_space
 	  balls = []
@@ -79,19 +85,23 @@ class Blackboard  < Shoes::Widget
 	  line    0,d+480,200,d+480,      stroke: "#E0E0E0" ,strokewidth: 40
 
 	  nostroke
-
-	  #p balls[0][1].methods - Object.methods
-      #p space.gravity
-	  #p space.gravity= vec2(5,10)
-	  #spy
-
-	  100.times { balls <<  [0,drop_ball() ] }
-	  animate(3) do
-			balls <<  [0,drop_ball() ] while balls.size<150 if (balls.size<70)
-			declare("#{200+(Time.now.to_f*10).round%100}")
-			mask("#{200+(Time.now.to_f*10+1).round%100}")
+	  
+	  if is_simulation
+		  100.times { balls <<  [0,drop_ball() ] } 
+		  animate(3) do
+				balls <<  [0,drop_ball() ] while balls.size<150 if (balls.size<70)
+				bloc_on("#{200+(Time.now.to_f*10).round%100}")
+				bloc_off("#{200+(Time.now.to_f*10+1).round%100}")
+		  end
 	  end
 	  animate(7) do
+		while @nbfile_push>0 && balls.size < 150
+			balls << [0,drop_ball() ] 
+			@nbfile_push -= 1
+		end
+		while @nbfile_pop>0 && balls.size > 0
+			@nbfile_pop -= 1
+		end
 		unless $statusb.is_suspend
 			10.times { space.step 0.05 }
 			r=[]
@@ -105,7 +115,7 @@ class Blackboard  < Shoes::Widget
 			end
 			balls=r
 			#p [r.size,r[0][0],r[0][1].top,$statusb.nbfiles]  rescue nil
-			$statusb.nbfiles=balls.size
+			$statusb.nbfiles=balls.size if is_simulation 
 			r=nil
 		end
 	  end
@@ -115,7 +125,7 @@ class Blackboard  < Shoes::Widget
 	  color= rgb((50+((rand(100)<10) ? rand(200) : rand(30))).to_i ,100+rand(140),200+rand(40)) 
       cp_oval(x0+rand(30), y0+rand(40), 2+rand(4), { fill: color })
   end
-  def declare(ip,&blk)
+  def bloc_on(ip,&blk)
 	(@ip[ip].style fill: "#BB3030";return) if @ip[ip]
 	col=@ip.size/25
 	lig=@ip.size%25
@@ -128,12 +138,19 @@ class Blackboard  < Shoes::Widget
 	  @ip[ip].click { alert("Apparition of #{ip} at #{t}") }
 	end
   end
-  def mask(ip)
+  def bloc_off(ip)
 	return unless @ip[ip]
 	@ip[ip].style fill: "#606060" 
 	#@ip.delete(ip) # delete in hash
   end
+  
+  #--------------- from call back p2p
+  def upload(f)			@nbfile_pop +=1	end
+  def download(f)		@nbfile_push+=1	end  
+  def declare(type,client)	type ? bloc_on(client) : bloc_off(client)  end  
 end
+
+################### if Chipmunk not dispo : a pannel ############## 
 
 rescue Exception  => e
 	puts " |   "+e.to_s + "\n  "+ e.backtrace.join("\n |     ")
@@ -150,8 +167,53 @@ EEND
 			timer(10) { @a.text=""}
 		end
 	  end
+	  #--------------- from call back p2p
+	  def upload(f)		end
+	  def download(f)	end  
+	  def declare(type,client)	  end  
 	end
 end
+
+####################################################################
+#                       P2P inteface
+####################################################################
+require File.dirname(__FILE__)+"/p2p.rb"
+
+module GUI_interface
+  #--------------- Callback to GUI ----------------------  
+  # p2p is run by > Objetct.run_p2p(shoes,pass,mode,lserver) by 'parent'
+  # then this callback is called by p2p to parent
+  
+  def shoes?() Shoes.app	end 
+  def sending(f)  			$app.p2p_sending(f)			end
+  def receiving(f,client)	$app.p2p_receiving(f,client) end
+  def suspended?()			$app.p2p_is_suspended?()	end
+  def discover(client)		$app.p2P_discover(client)	end
+  def forget(client)		$app.p2p_forget(client)		end
+  def update_nbfile(n)		$app.p2p_update_nbfile(n)	end
+  def log(*txt)
+    puts("%-8s | %29s | %-3s | %s" % [Time.now.strftime("%H:%M:%S"),DRb.uri.to_s.split('//')[1],self.class.to_s[0..3],txt.join(' ')]) unless txt[0][0,1]==" "
+  end
+end
+
+Thread.new {
+  sleep 3
+  if ARGV.size==0
+	ARGV << "shoerdev"
+	ARGV << "client"
+	ARGV << "druby://localhost:50500"
+  end
+  password=ARGV.shift  # password :)
+  mode=    ARGV.shift  # type: client/server
+  servers=ARGV        # serveur
+
+  Thread.abort_on_exception=true
+  run_p2p(password,mode,servers)
+}
+
+####################################################################
+#                       Main window 
+####################################################################
 
 class MyButton < Shoes::Widget
   def initialize(left,top,text)
@@ -180,9 +242,9 @@ class StatusBarr < Shoes::Widget
 		flow width: 600, height: 20, fill: "#E0E0E0" do
 			background "#E0E0E0"
 			inscription "    Nb Files :  "   ,stroke: "#E0E0E0" , width: 100 ,fill: "#909090"
-			@nbf=inscription   'xxxxxxxx'    ,stroke: "#909090" , width: 50  ,fill: "#E0E0E0"
+			@nbf=inscription   '0' 		     ,stroke: "#909090" , width: 50  ,fill: "#E0E0E0"
 			inscription "    Nb Shoers : "   ,stroke: "#E0E0E0" , width: 100,fill: "#909090"
-			@nbp=inscription '99'            ,stroke: "#000000" , width: 50
+			@nbp=inscription '0'             ,stroke: "#000000" , width: 50
 			inscription "    State :  "      ,stroke: "#E0E0E0" , width: 100,fill: "#909090"
 			@iss=inscription 'ONLINE'        ,stroke: "#000000" , width: 100
 			inscription '_________________'   ,stroke: "#909090" , width: 100,fill: "#909090"
@@ -191,11 +253,11 @@ class StatusBarr < Shoes::Widget
 	def nbfiles=(v)
 		sv=v.to_s
 		@nbf.text= bg(fg(sv, "#909090"),"#E0E0E0") if sv!=@nbfiles
-		@nbfiles=sv
+		@nbfiles=v
 	end
 	def nbpeer=(v)
 		@nbp.text=v.to_s  if v.to_s!=@nbpeer
-		@nbpeer=v.to_s
+		@nbpeer=v
 	end
 	def is_suspend=(v)
 		@iss.text=v ?  "OFFLINE" : "ONLINE" if v!=is_suspend
@@ -203,15 +265,34 @@ class StatusBarr < Shoes::Widget
 	end
 end
 
+class Shoes::App
+  def p2p_sending(f)			invoke_in_shoes_mainloop { @bl.upload(f) }				end
+  def p2p_receiving(f,client) 	invoke_in_shoes_mainloop { @bl.download(f)	; $statusb.nbfiles+=1 }			end  
+  def p2P_discover(client) 	invoke_in_shoes_mainloop { @bl.declare(true,client); $statusb.nbpeer+=1	}		end
+  def p2p_forget(client)		invoke_in_shoes_mainloop { @bl.declare(false,client); $statusb.nbpeer-=1 }	end
+  def p2p_update_nbfile(n)		invoke_in_shoes_mainloop { $statusb.nbfiles=n }			end
+  def p2p_is_suspended?()
+	$statusb.is_suspend() 
+  end
+  def started()
+	Dir[$pattern].each { |f| @bl.download(f) }
+  end
+end
+if File.exists?("s2s.rb")
+  FileUtils.mkdir_p("TEST/ME")
+  Dir.chdir("TEST/ME")
+end
 # w=600 h=500
-Shoes.app title: 'S2S Shoes share code !' do
+Shoes.app title: "S2S Shoes share code, #{Dir.pwd}" do
+	$app=self
+	define_async_thread_invoker(0.1)
 	stack height: 1.0 do
 		background "#204040".."#205050" 
 		fill "#909090"
 		stack height: 100  do
 			#background "#50A0A0".."#507070" 
 			background "#70C0C0".."#70A0A0" 
-			my_button(180,10,"Configuration")   { alert("CouCoue") }
+			#my_button(180,10,"Configuration")   { alert("CouCoue") }
 			my_button(320,10,"Repos.")   { alert($statusb.nbfiles);  $statusb.nbfiles=999 ;}
 			my_button(320,40,"Pause")    { $statusb.is_suspend=true }
 			my_button(320,70,"Restart")  { $statusb.is_suspend=false }
@@ -219,8 +300,9 @@ Shoes.app title: 'S2S Shoes share code !' do
 			my_button(450,40,"Import")      { alert("pause") }
 			my_button(450,70,"Exit")     { Thread.new {sleep 0.5; exit!} }
         end
-		stack height: 385 do bl=blackboard end
+		stack height: 385 do @bl=blackboard(false) end
 		stack height: 100  do status_barr( 482 ) end
 	end
 	puts "\n"*6
+	started()
 end
