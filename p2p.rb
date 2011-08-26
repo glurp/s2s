@@ -52,7 +52,7 @@
 #   Shoes (if use) must support threading !!
 #
 ################################################################################
-VERSION=1.01
+VERSION=1.02
 
 MAX_PEER_KNOWN=100				# server side : trnsmit only 100 first peer in current list
 PERIOD_WATCH_PEERS_OTHERS=60	# any side 

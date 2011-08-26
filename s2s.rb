@@ -287,8 +287,9 @@ if File.exists?("s2s.rb")
   FileUtils.mkdir_p("TEST/ME")
   Dir.chdir("TEST/ME")
 end
+VERSION="G1.0" unless defined?(VERSION)
 # w=600 h=500
-Shoes.app title: "S2S #{Dir.pwd} #{server}",width: 600,  height: 500 do
+Shoes.app title: "S2S V#{VERSION} #{Dir.pwd} #{server} ",width: 600,  height: 500 do
 	$app=self
 	define_async_thread_invoker(0.5)
 	stack height: 1.0 do
