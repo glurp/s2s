@@ -311,4 +311,6 @@ Shoes.app title: "S2S V#{VERSION} #{Dir.pwd} #{server} ",width: 600,  height: 50
 	end
 	puts "\n"*6
 	started()
+	win.set_size_request(600, 500)
+	win.set_resizable(false) 
 end
