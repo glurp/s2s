@@ -272,7 +272,6 @@ class Client
 	  end
     end
 	nbfiles=0
-	p filelist
     filelist.each do |f,time|
 	  (@ban[n]=Time.now;break) if nbfiles>MAX_FILE_FROM_ONE_PEER
       if !  suspended?() && ( (! File.exists?(f)) || File.mtime(f).to_i<time )

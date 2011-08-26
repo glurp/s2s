@@ -278,7 +278,7 @@ class Shoes::App
 	$statusb.is_suspend() 
   end
   def started()
-	Dir[$pattern].each { |f| @bl.download(f) }
+	Dir[$pattern].each { |f| p2p_receiving(f,"") }
   end
   def view(f)
   end
@@ -290,7 +290,7 @@ end
 # w=600 h=500
 Shoes.app title: "S2S #{Dir.pwd} #{server}",width: 600,  height: 500 do
 	$app=self
-	define_async_thread_invoker(0.1)
+	define_async_thread_invoker(0.5)
 	stack height: 1.0 do
 		background "#204040".."#205050" 
 		fill "#909090"
