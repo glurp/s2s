@@ -7,6 +7,7 @@ mkdir TEST\T1
 mkdir TEST\T2
 mkdir TEST\T3
 mkdir TEST\T4
+cat s2s.rb p2p > x.x
 cp x.x TEST/T2/a.rb
 cp x.x TEST/T2/b.rb
 cp x.x TEST/T2/a.txt
@@ -18,7 +19,7 @@ cp x.x TEST/T2/proj/p.rb
 mkdir TEST\T2\proj/lib
 cp x.x TEST/T3/X.rb
 cp x.x TEST/T3/Y.png
-
+rm x.x
 
 cd TEST
 cd T1 && start "server"  cmd /k "ruby ../../p2p.rb shoerdev server druby://homeregis.dyndns.org:50500"

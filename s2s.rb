@@ -263,6 +263,9 @@ class StatusBarr < Shoes::Widget
 		@iss.text=v ?  "OFFLINE" : "ONLINE" if v!=is_suspend
 		@is_suspend=v
 	end
+	def view(file)
+		
+	end
 end
 
 class Shoes::App
@@ -292,13 +295,13 @@ Shoes.app title: "S2S #{Dir.pwd} #{server}",width: 600,  height: 500 do
 		stack height: 100  do
 			#background "#50A0A0".."#507070" 
 			background "#70C0C0".."#70A0A0" 
-			#my_button(180,10,"Configuration")   { alert("CouCoue") }
+			my_button(450,10,"View")   {  view(ask_open_file()) }
 			#my_button(320,10,"Repos.")   { alert($statusb.nbfiles);  $statusb.nbfiles=999 ;}
-			my_button(320,40,"Pause")    { $statusb.is_suspend=true }
-			my_button(320,70,"Restart")  { $statusb.is_suspend=false }
+			my_button(450,40,"Pause")    { $statusb.is_suspend=true }
+			my_button(450,70,"Restart")  { $statusb.is_suspend=false }
 			#my_button(450,10,"Export")   { alert("CouCoue") }
 			#my_button(450,40,"Import")      { alert("pause") }
-			my_button(450,70,"Exit")     { Thread.new {sleep 0.5; exit!} }
+			#my_button(450,70,"Exit")     { Thread.new {sleep 0.5; exit!} }
         end
 		stack height: 385 do @bl=blackboard(false) end
 		stack height: 100  do status_barr( 482 ) end
