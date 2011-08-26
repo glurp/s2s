@@ -201,7 +201,7 @@ Thread.new {
   if ARGV.size==0
 	ARGV << "shoerdev"
 	ARGV << "client"
-	ARGV << "druby://homeregis.dyndnd.org:50500"
+	ARGV << "druby://homeregis.dyndns.org:50500"
   end
   password=ARGV.shift  # password :)
   mode="client"      # type: client/server
@@ -210,7 +210,7 @@ Thread.new {
   Thread.abort_on_exception=true
   run_p2p(password,mode,servers)
 }
-server=ARGV.size==0 ? homeregis.dyndnd.org : ARGV[1]
+server=ARGV.size==0 ?  "homeregis.dyndnd.org" : ARGV[1]
 ####################################################################
 #                       Main window 
 ####################################################################
