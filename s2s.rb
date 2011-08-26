@@ -201,16 +201,16 @@ Thread.new {
   if ARGV.size==0
 	ARGV << "shoerdev"
 	ARGV << "client"
-	ARGV << "druby://localhost:50500"
+	ARGV << "druby://homeregis.dyndnd.org:50500"
   end
   password=ARGV.shift  # password :)
-  mode=    ARGV.shift  # type: client/server
+  mode="client"      # type: client/server
   servers=ARGV        # serveur
 
   Thread.abort_on_exception=true
   run_p2p(password,mode,servers)
 }
-
+server=ARGV.size==0 ? homeregis.dyndnd.org : ARGV[1]
 ####################################################################
 #                       Main window 
 ####################################################################
@@ -283,7 +283,7 @@ if File.exists?("s2s.rb")
   Dir.chdir("TEST/ME")
 end
 # w=600 h=500
-Shoes.app title: "S2S Shoes share code, #{Dir.pwd}" do
+Shoes.app title: "S2S #{Dir.pwd} #{server}",width: 600,  height: 500 do
 	$app=self
 	define_async_thread_invoker(0.1)
 	stack height: 1.0 do
@@ -293,11 +293,11 @@ Shoes.app title: "S2S Shoes share code, #{Dir.pwd}" do
 			#background "#50A0A0".."#507070" 
 			background "#70C0C0".."#70A0A0" 
 			#my_button(180,10,"Configuration")   { alert("CouCoue") }
-			my_button(320,10,"Repos.")   { alert($statusb.nbfiles);  $statusb.nbfiles=999 ;}
+			#my_button(320,10,"Repos.")   { alert($statusb.nbfiles);  $statusb.nbfiles=999 ;}
 			my_button(320,40,"Pause")    { $statusb.is_suspend=true }
 			my_button(320,70,"Restart")  { $statusb.is_suspend=false }
-			my_button(450,10,"Export")   { alert("CouCoue") }
-			my_button(450,40,"Import")      { alert("pause") }
+			#my_button(450,10,"Export")   { alert("CouCoue") }
+			#my_button(450,40,"Import")      { alert("pause") }
 			my_button(450,70,"Exit")     { Thread.new {sleep 0.5; exit!} }
         end
 		stack height: 385 do @bl=blackboard(false) end

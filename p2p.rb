@@ -51,6 +51,7 @@
 #   Shoes (if use) must support threading !!
 #
 ################################################################################
+VERSION=1.01
 
 MAX_PEER_KNOWN=100				# server side : trnsmit only 100 first peer in current list
 PERIOD_WATCH_PEERS_OTHERS=60	# any side 
@@ -98,7 +99,7 @@ module Common
   def mkdir(d)     FileUtils.mkdir_p(d) 						end
   def proxy(u)     $proxy[u] || ( $proxy[u]=DRbObject.new((),u)) end
   def sign(data)   [$Password,data].join('/') 					end # !!! TODO sha?
-  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) ; txt[0] end
+  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) if $DEBUG ; txt[0] end
   
 end
 
@@ -126,7 +127,7 @@ class Serveur
       end
     else
       log "request not for me!"
-      add_peers()
+      nil
     end
   rescue
     log $!.to_s+ " "+ $!.backtrace[0..2].join(" < ")
