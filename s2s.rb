@@ -280,6 +280,8 @@ class Shoes::App
   def started()
 	Dir[$pattern].each { |f| @bl.download(f) }
   end
+  def view(f)
+  end
 end
 if File.exists?("s2s.rb")
   FileUtils.mkdir_p("TEST/ME")

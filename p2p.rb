@@ -1,6 +1,7 @@
 ################################################################################
 #                        S h o e s      P 2 P
 ################################################################################
+# 
 # 2 types of member:
 #     serveur : give only adresses of all member which had connect  to him
 #     client  : take list of member from one or several serveur, 
@@ -59,7 +60,7 @@ PERIODE_GET_LIST_AND_FILE=10	# client side
 TEMPO_GETDIR=60					# serveur side : scan local dir each 60 seconds (mini,on demand)
 PROB_READDIR_PEER_PERCENT=30	# % : each 10secs , get distant dir if xx% lucky
 PROB_WATCH_BANNED=5 			# % : a banned site is respawn at prob of 5%
-MAX_SIZE_FILE=10**1000*1000		# any side : for make dir list and before memorize file
+MAX_SIZE_FILE=10*1000*1000		# any side : for make dir list and before memorize file
 PORT_DEF=50500					# tcp port for server, +1... for clients
 MAX_FILE_FROM_ONE_PEER=1000		# client side 
 MAX_OLD_FILE=90*24*3600			# serveur side : do not transmit old files (?...)
@@ -126,7 +127,7 @@ class Serveur
           []
       end
     else
-      log "request not for me!"
+      log "error password?"
       nil
     end
   rescue
@@ -155,7 +156,7 @@ class Serveur
     
       add_peers([ DRb.uri ])      
       first_discover_other_peer(is_server)
-	  log "i am #{DRb.uri}, create Client part..."
+	  log "I am #{DRb.uri}, create Client part..."
       Client.new().run unless is_server
 
       ############### watch presence of known peer and get there known peer list
@@ -218,7 +219,7 @@ class Serveur
     timeout(5) { proxy(uri).fserver( sign(""),"",:test) }
 	true
   rescue Exception => e
-    log "Onaccessible #{uri} ! : " + e.to_s
+    log "Uaccessible #{uri} ! : " + e.to_s
 	false
   end
 end
