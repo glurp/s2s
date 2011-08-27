@@ -76,10 +76,10 @@ Ruby (1.9.2 for gui),
 
 Green-shoes for GUI
 
-Chipmunk Windows (so linux seem is supported but with less fun...)
+Chipmunk Windows (so linux is supported but with less fun...)
 
 Dispose of an access to Internet without proxy 
-(but it  work on a isolated LAN, run a default server in the LAN)```
+(but it  work on a isolated LAN, run a default server in the LAN)
 
 If firewall :
 
@@ -104,6 +104,7 @@ Status
 ======
 
 Ready for experimentations 
+
 - Chipmunk in gs : ok, patched (in s2s.rb) for limit the number of dynamic shape
 - firewall and NAT : serveur should signale the issue to the client
 - Watch ui memory ;)
