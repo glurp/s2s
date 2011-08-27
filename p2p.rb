@@ -33,7 +33,7 @@
 #
 #---------------------------------------------------------------------------------
 # Principes
-#    server(s) maintain a liste of clients presents on the net
+#    server(s) maintain a list of clients presents on the net
 #    clients   annouce on server(s) and share files with others clients
 #       * file transfert decision on (locl exist) or (time based)
 #    peer ip liste ares arbitrary limited to 100 known peer
@@ -90,7 +90,7 @@ module GUI_interface
   def forget(client)		end
   def update_nbfile(n)		end
   def log(*txt)
-    puts("%-8s | %29s | %-3s | %s" % [Time.now.strftime("%H:%M:%S"),DRb.uri,self.class.to_s[0..3],txt.join(' ')]) unless txt[0][0,1]==" "
+	puts("%-8s | %29s | %-3s | %s" % [Time.now.strftime("%H:%M:%S"),DRb.uri,self.class.to_s[0..3],txt.join(' ')]) unless txt[0][0,1]==" "
   end
 end
 
@@ -111,31 +111,31 @@ class Serveur
   def fserver(c,param,action) 
   tr [c,action,"   ",param]
   begin
-    if c==sign("")
-      case action 
-         when :getdir     
-           tr $Mode=="client" ? getdir(param) : nil 
-         when :getfile    
-           sending(param)
+	if c==sign("")
+	  case action 
+	 	when :getdir     
+	 	  tr $Mode=="client" ? getdir(param) : nil 
+	 	when :getfile    
+	 	  sending(param)
 		   File.read( fbasename(param) ) 
-         when :getmembers 
-          tr add_peers(false,param)[0..MAX_PEER_KNOWN]
-         when :geturi 
-          [DRb.uri]
-         when :test
+	 	when :getmembers 
+	 	 tr add_peers(false,param)[0..MAX_PEER_KNOWN]
+	 	when :geturi 
+	 	 [DRb.uri]
+	 	when :test
 			"ok"
-         when :discover
+	 	when :discover
 			 ok_drb(param) ? (discover(param.to_s);add_peers(true,[param])[0..MAX_PEER_KNOWN] ): false
-         else
-          log "unknwon request #{action.inspect}"
-          []
-      end
-    else
-      log "error password?"
-      nil
-    end
+	 	else
+	 	 log "unknwon request #{action.inspect}"
+	 	 []
+	  end
+	else
+	  log "error password?"
+	  nil
+	end
   rescue
-    log $!.to_s+ " "+ $!.backtrace[0..2].join(" < ")
+	log $!.to_s+ " "+ $!.backtrace[0..2].join(" < ")
   end
   end
   def getdir(filter)
@@ -156,35 +156,35 @@ class Serveur
 	end
   end
   def init(is_server)
-    Thread.new {
-    
-      add_peers( true , [ DRb.uri ])      
-      first_discover_other_peer(is_server)
+	Thread.new {
+	
+	  add_peers( true , [ DRb.uri ])      
+	  first_discover_other_peer(is_server)
 	  log "I am #{DRb.uri}, create Client part..."
-      Client.new().run unless is_server
+	  Client.new().run unless is_server
 
-      ############### watch presence of known peer and get there known peer list
-      loop {
-        sleep PERIOD_WATCH_PEERS_OTHERS
-        timeout(200) { whatch_presence_peers(is_server) } rescue tr($!,*$!.backtrace)
-      }
-    }
+	  ############### watch presence of known peer and get there known peer list
+	  loop {
+		sleep PERIOD_WATCH_PEERS_OTHERS
+		timeout(200) { whatch_presence_peers(is_server) } rescue tr($!,*$!.backtrace)
+	  }
+	}
    end
    private
   def first_discover_other_peer(is_server)
-      loop {
-        log "finding almost one server..."
-        $servers[(is_server ? 1:0)..-1].each do |serv|
+	  loop {
+		log "finding almost one server..."
+		$servers[(is_server ? 1:0)..-1].each do |serv|
 			begin
 			  l=proxy(serv).fserver( sign(""),DRb.uri,:discover ) 
 			  l ? add_peers( true , l ) : log("*** Issue firewall /NAT ? ***")
 			rescue
 			end
-        end
-        break if $container.size>1
-        break if is_server
-        sleep 10
-      } 
+		end
+		break if $container.size>1
+		break if is_server
+		sleep 10
+	  } 
 	  if $container.size<=1
 		log "I am alone as server"
 	  else
@@ -193,26 +193,26 @@ class Serveur
   end
 
   def whatch_presence_peers(is_server)
-    lcont=$container.dup
+	lcont=$container.dup
 	lerr=[]
-    lcont.each { |n| 
-      next if n.to_s==DRb.uri.to_s
-      next if n.to_s==$server[0]
-      begin
+	lcont.each { |n| 
+	  next if n.to_s==DRb.uri.to_s
+	  next if n.to_s==$server[0]
+	  begin
 		tr "Check #{n}..."
-        add_peers(false,proxy(n).fserver( sign(""),$container,:getmembers ))
-      rescue
+		add_peers(false,proxy(n).fserver( sign(""),$container,:getmembers ))
+	  rescue
 		lerr << n
-      end
-    }  
+	  end
+	}  
 	if lerr.size>0 && (lcont.size-lerr.size) > 4
 	   lerr.each {|e| log "Discard #{e}" }
-      $container=lcont - lerr 
+	   $container=lcont - lerr 
 	end
   end
 
   def add_peers(nocheck=false,peers0=[])
-    return($container) unless peers0
+	return($container) unless peers0
 	Thread.new(peers0) { |peers|
 		l=peers.flatten.select{ |elem| (! $container.index(elem) ) && ( nocheck || ok_drb(elem)) } 
 		if l.size>0
@@ -220,15 +220,15 @@ class Serveur
 		  $container=$container.push(*(peers.flatten)).uniq
 		end
 	} if peers0.size>0
-    $container
+	$container
   end  
 
   def ok_drb(uri)
 	tr "Test access #{uri}..."
-    timeout(7) { proxy(uri).fserver( sign(""),"",:test) }
+	timeout(7) { proxy(uri).fserver( sign(""),"",:test) }
 	true
   rescue Exception => e
-    log "Unreachable  #{uri} ! : " + e.to_s
+	log "Unreachable  #{uri} ! : " + e.to_s
 	false
   end
 end
@@ -238,50 +238,50 @@ end
 class Client
   include Common
   def initialize()
-    @iam=proxy(DRb.uri).fserver( sign(""),[],:geturi)[0]
-    log "I am #{@iam}"
-    @ban={}
+	@iam=proxy(DRb.uri).fserver( sign(""),[],:geturi)[0]
+	log "I am #{@iam}"
+	@ban={}
   end
   def run
-    Thread.new do
-      loop {
-        first=true
-        $container.dup.each do |n|
-        begin
-         next if n==DRb.uri || n==@iam
-         next if @ban[n] && rand(100)>PROB_WATCH_BANNED
-         next if rand(100)>PROB_READDIR_PEER_PERCENT
+	Thread.new do
+	  loop {
+		first=true
+		$container.dup.each do |n|
+		begin
+	 	next if n==DRb.uri || n==@iam
+	 	next if @ban[n] && rand(100)>PROB_WATCH_BANNED
+	 	next if rand(100)>PROB_READDIR_PEER_PERCENT
 
-         @ban.delete(n)
-         #log "Consult #{n}... "
-         directory_transfert(n) unless suspended?()
-        rescue
+	 	@ban.delete(n)
+	 	#log "Consult #{n}... "
+	 	directory_transfert(n) unless suspended?()
+		rescue
 			log "peer #{n} seem to be down"
 			log "     "+$!.to_s+ " "+ $!.backtrace[0..1].join(" < ")
-        end ; end
-        sleep PERIODE_GET_LIST_AND_FILE
-      }
-    end
+		end ; end
+		sleep PERIODE_GET_LIST_AND_FILE
+	  }
+	end
   end
   def directory_transfert(n)
-    l=proxy(n).fserver(sign(""),$pattern,:getdir)
+	l=proxy(n).fserver(sign(""),$pattern,:getdir)
 	return if !l
-    filelist=l.map { |f,t| [fbasename(f),t] } 
-    filelist.each do |f,time|
+	filelist=l.map { |f,t| [fbasename(f),t] } 
+	filelist.each do |f,time|
 	  if f !~ $patterncli
 		log "File name has strange type : #{f}, banning #{n}"
 		@ban[n]=Time.now
 		return
 	  end
-    end
+	end
 	nbfiles=0
-    filelist.each do |f,time|
+	filelist.each do |f,time|
 	  (@ban[n]=Time.now;break) if nbfiles>MAX_FILE_FROM_ONE_PEER
-      if !  suspended?() && ( (! File.exists?(f)) || File.mtime(f).to_i<time )
+	  if !  suspended?() && ( (! File.exists?(f)) || File.mtime(f).to_i<time )
 		nbfiles+=1
 		receiving(f,n.to_s)
-        content= proxy(n).fserver(sign(""),f,:getfile)
-        if  content.size > MAX_SIZE_FILE 
+		content= proxy(n).fserver(sign(""),f,:getfile)
+		if  content.size > MAX_SIZE_FILE 
 			log "received file #{f} too big: #{content.size/1024} KB from #{n}"
 			content="#file too big for S2S : original size=#{content.size} B !"
 		end
@@ -294,8 +294,8 @@ class Client
 			File.utime(t,t,f)
 			log("from #{f} : #{$1}")  if content.match(MARKEUR_ANNOUNCE) && $1!~/\[/
 		end
-      end
-    end
+	  end
+	end
   rescue Exception => e
 	tr "     "+$!.to_s+ " "+ $!.backtrace[0..1].join(" < ")
   end
@@ -303,8 +303,8 @@ end
 
 def get_public_ip()
   UDPSocket.open do |s|
-    s.connect '208.80.152.2', 1 # wikipedia, connection don't need effective
-    s.addr.last
+	s.connect '208.80.152.2', 1 # wikipedia, connection don't need effective
+	s.addr.last
   end
 end
 

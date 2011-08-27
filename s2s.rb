@@ -6,18 +6,18 @@ require 'thread'
 ###########################  Patch fg() bg() for permission to use string color
 class Shoes
   class App
-    [[:bg, :background], [:fg, :foreground]].each do |m, tag|
-      define_method m do |*str|
-        color = str.pop
-        str = str.join
+	[[:bg, :background], [:fg, :foreground]].each do |m, tag|
+	  define_method m do |*str|
+		color = str.pop
+		str = str.join
 		unless String===color # <<<
 			rgb = "#"+(color[0, 3].map{|e| (e*255.0).to_i}.map{|i| sprintf("%#02X", i)[-2,2]}.join)
 		else
 			rgb=color # <<<
 		end
-        "<span #{tag}='#{rgb}'>#{str}</span>"
-      end
-    end
+		"<span #{tag}='#{rgb}'>#{str}</span>"
+	  end
+	end
   end
 end
 
@@ -32,22 +32,22 @@ module ChipMunk
   end
 
   def cp_oval l, t, r, opts = {}
-    b = CP::Body.new 1,1
-    b.p = vec2 l, t
-    @space.add_body b
+	b = CP::Body.new 1,1
+	b.p = vec2 l, t
+	@space.add_body b
 	shape=CP::Shape::Circle.new(b, r, vec2(0, 0))
-    @space.add_shape shape
-      
-    opts = opts.merge({left: l-r-1, top: t-r-1, width: 2*r+2, height: 2*r+2, body: b, inflate: r-2, shape: shape})
-    oval opts
+	@space.add_shape shape
+	  
+	opts = opts.merge({left: l-r-1, top: t-r-1, width: 2*r+2, height: 2*r+2, body: b, inflate: r-2, shape: shape})
+	oval opts
   end
 end
 #----------  create methode cp_remove, which destroy in shoes AND in ChipMunk 
 
 Shoes::ShapeBase.class_eval do
   def cp_remove(space)
-    space.remove_body( args[:body])
-    space.remove_shape( args[:shape])
+	space.remove_body( args[:body])
+	space.remove_shape( args[:shape])
 	self.remove
   end
 end
@@ -59,7 +59,7 @@ end
 class Blackboard  < Shoes::Widget
   include ChipMunk
   def initialize( is_simulation = true)
-      @wpos=win.position
+	  @wpos=win.position
 	  @nbfile_pop=0
 	  @nbfile_push=2
 	  @ip={}
@@ -72,7 +72,7 @@ class Blackboard  < Shoes::Widget
 	  cp_line 300, 452, 500, 454, stroke: "#806060"
 
 
-      #------- border drawing area
+	  #------- border drawing area
 
 	  cp_line 0,100, 0,484 ,      stroke: "#204040"
 	  cp_line 600,484, 600,100,   stroke: "#204040"
@@ -103,8 +103,8 @@ class Blackboard  < Shoes::Widget
 		while @nbfile_pop>0 && balls.size > 0
 			@nbfile_pop -= 1
 		end
-        wpos=win.position
-	    @space.gravity = vec2((@wpos[0]-wpos[0])/5+0 , (@wpos[1]-wpos[1])/3+25)
+		wpos=win.position
+		@space.gravity = vec2((@wpos[0]-wpos[0])/5+0 , (@wpos[1]-wpos[1])/3+25)
 		@wpos=wpos
 		unless $statusb.is_suspend
 			10.times { space.step 0.05 }
@@ -127,7 +127,7 @@ class Blackboard  < Shoes::Widget
   def drop_ball
 	  x0,y0=110,50
 	  color= rgb((50+((rand(100)<10) ? rand(200) : rand(30))).to_i ,100+rand(140),200+rand(40)) 
-      cp_oval(x0+rand(30), y0+rand(40), 2+rand(4), { fill: color })
+	  cp_oval(x0+rand(30), y0+rand(40), 2+rand(4), { fill: color })
   end
   def bloc_on(ip,&blk)
 	(@ip[ip].style fill: "#BB3030";return) if @ip[ip]
@@ -196,7 +196,7 @@ module GUI_interface
   def forget(client)		$app.p2p_forget(client)		end
   def update_nbfile(n)		$app.p2p_update_nbfile(n)	end
   def log(*txt)
-    puts("%-8s | %29s | %-3s | %s" % [Time.now.strftime("%H:%M:%S"),DRb.uri.to_s.split('//')[1],self.class.to_s[0..3],txt.join(' ')]) unless txt[0][0,1]==" "
+	puts("%-8s | %29s | %-3s | %s" % [Time.now.strftime("%H:%M:%S"),DRb.uri.to_s.split('//')[1],self.class.to_s[0..3],txt.join(' ')]) unless txt[0][0,1]==" "
   end
 end
 
@@ -253,7 +253,7 @@ class StatusBarr < Shoes::Widget
 			@iss=inscription 'ONLINE'        ,stroke: "#000000" , width: 100
 			inscription '_________________'   ,stroke: "#909090" , width: 100,fill: "#909090"
 		end
-    end
+	end
 	def nbfiles=(v)
 		sv=v.to_s
 		@nbf.text= bg(fg(sv, "#909090"),"#E0E0E0") if sv!=@nbfiles
@@ -309,7 +309,7 @@ Shoes.app title: "S2S V#{VERSION} #{Dir.pwd} #{server} ",width: 600,  height: 50
 			#my_button(450,10,"Export")   { alert("CouCoue") }
 			#my_button(450,40,"Import")      { alert("pause") }
 			#my_button(450,70,"Exit")     { Thread.new {sleep 0.5; exit!} }
-        end
+		end
 		stack height: 385 do @bl=blackboard(false) end
 		stack height: 100  do status_barr( 482 ) end
 	end
