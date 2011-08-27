@@ -17,21 +17,25 @@ Usage
 =====
 
 Run a client with green-shoes Gui  :
+
 ```
   > ruby s2s.rb
 ```
 
 Run a client without gui: in CLI (no dependency, only ruby 1.9)
+
 ```
   > ruby p2p.rb
 ```
 
 Run a 'server' (no dependency , only ruby 1.9) :
+
 ```
   > ruby p2p.rb  shoerdev server  druby://<myip>:50500  druby://homeregis.dyndns.org:50500  ...other servers....
 ```
 
 make your own farm of p2p :
+
 ```
   > ruby p2p.rb  shoerdev server  druby://localhost:50500  
   > cd A ; ruby ../p2p.rb  shoerdev client  druby://localhost:50500  
@@ -73,18 +77,20 @@ Ruby (1.9.2 for gui),
 Green-shoes for GUI
 
 Chipmunk Windows (so linux seem is supported ut with less fun...)
+
 ```
  Access to Internet  without proxy 
  but it  work on a isolated LAN, run a default server in the LAN)
 ```
 
 If firewall :
-```
- 
+
+``` 
  Create a rule for authorisation on port 50500..50510 for TCP/UDP (for your process ruby)
 ```
 
 If NAT (box adsl)
+
 ```
  Create a redirection rule for ports 50500.50510 fom/to host/ruby process
 ```
