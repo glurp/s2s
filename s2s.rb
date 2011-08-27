@@ -59,6 +59,7 @@ end
 class Blackboard  < Shoes::Widget
   include ChipMunk
   def initialize( is_simulation = true)
+      @wpos=win.position
 	  @nbfile_pop=0
 	  @nbfile_push=2
 	  @ip={}
@@ -102,6 +103,9 @@ class Blackboard  < Shoes::Widget
 		while @nbfile_pop>0 && balls.size > 0
 			@nbfile_pop -= 1
 		end
+        wpos=win.position
+	    @space.gravity = vec2((@wpos[0]-wpos[0])/5+0 , (@wpos[1]-wpos[1])/3+25)
+		@wpos=wpos
 		unless $statusb.is_suspend
 			10.times { space.step 0.05 }
 			r=[]
@@ -144,7 +148,7 @@ class Blackboard  < Shoes::Widget
 	#@ip.delete(ip) # delete in hash
   end
   
-  #--------------- from call back p2p
+  #--------------- from callback p2p
   def upload(f)			@nbfile_pop +=1	end
   def download(f)		@nbfile_push+=1	end  
   def declare(type,client)	type ? bloc_on(client) : bloc_off(client)  end  
@@ -167,7 +171,7 @@ EEND
 			timer(10) { @a.text=""}
 		end
 	  end
-	  #--------------- from call back p2p
+	  #--------------- from callback p2p
 	  def upload(f)		end
 	  def download(f)	end  
 	  def declare(type,client)	  end  
