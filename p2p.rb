@@ -194,24 +194,21 @@ class Serveur
 
   def whatch_presence_peers(is_server)
     lcont=$container.dup
-    touched = false
-    lcont.flatten.each { |n| 
+	lerr=[]
+    lcont.each { |n| 
       next if n.to_s==DRb.uri.to_s
+      next if n.to_s==$server[0]
       begin
 		tr "Check #{n}..."
         add_peers(false,proxy(n).fserver( sign(""),$container,:getmembers ))
       rescue
-		if lcont.size>3 && n.to_s!=$servers[0]
-			forget(n.to_s)
-			log "Discard #{n}"
-			lcont.delete(n)
-			touched = true
-		else
-			log "Issue with #{n} but keep in peer list"
-		end
+		lerr << n
       end
     }  
-    $container=lcont if touched && lcont.size>3
+	if lerr.size>0 && (lcont.size-lerr.size) > 4
+	   lerr.each {|e| log "Discard #{e}" }
+      $container=lcont - lerr 
+	end
   end
 
   def add_peers(nocheck=false,peers0=[])
