@@ -6,7 +6,7 @@ Peer 2 peer directory share, for ruby (Shoes) snippets
 Presentation
 ============
 
-A simple p2p application, made for distribute little ruby applications.
+A simple p2p application, made for distribute little (free) ruby applications.
 GUI is made with Green-Shoes
 
 P2p part is based on an old 9 lines LOC showed by _why.
@@ -63,7 +63,7 @@ If someone copy a file in his shared-directory, this file will be copied to all 
 * *client* : a application share his files with all other client. 
    a *client* is *server* : it keep a list of all client, so a client is a server too.
 
-So servers are useful only at clients start up.
+So servers are useful only at clients startup.
 
 A server is running at homeregis.dyndns.org, so by default, all client take this one as server,
 but anybody can run server, it will enter in the ring.
@@ -109,8 +109,5 @@ Ready for experimentations
 - firewall and NAT : serveur should signale the issue to the client
 - Watch ui memory ;)
 - todo : a gui alternative with OCRA ?...
-
-
-NOTA
-I learned English with Rambo, Conan and Monster garage, so sorry for my English :)
+- define a protocol for delete/rename files and directorys : vote ?
 
