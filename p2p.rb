@@ -100,7 +100,7 @@ module Common
   def mkdir(d)     FileUtils.mkdir_p(d) 						end
   def proxy(u)     $proxy[u] || ( $proxy[u]=DRbObject.new((),u)) end
   def sign(data)   [$Password,data].join('/') 					end # !!! TODO sha?
-  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) if $DEBUG ; txt[0] end
+  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) if *DEBUG ; txt[0] end
   
 end
 
@@ -116,7 +116,8 @@ class Serveur
 	 	when :getdir     
 	 	  tr $Mode=="client" ? getdir(param) : nil 
 	 	when :getfile    
-	 	  sending(param)
+	 	   sending(param)
+		   log "Sending #{param}"
 		   File.read( fbasename(param) ) 
 	 	when :getmembers 
 	 	 tr add_peers(false,param)[0..MAX_PEER_KNOWN]
@@ -197,7 +198,7 @@ class Serveur
 	lerr=[]
 	lcont.each { |n| 
 	  next if n.to_s==DRb.uri.to_s
-	  next if n.to_s==$server[0]
+	  next if n.to_s==$servers[0]
 	  begin
 		tr "Check #{n}..."
 		add_peers(false,proxy(n).fserver( sign(""),$container,:getmembers ))
