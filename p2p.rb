@@ -100,7 +100,7 @@ module Common
   def mkdir(d)     FileUtils.mkdir_p(d) 						end
   def proxy(u)     $proxy[u] || ( $proxy[u]=DRbObject.new((),u)) end
   def sign(data)   [$Password,data].join('/') 					end # !!! TODO sha?
-  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) if *DEBUG ; txt[0] end
+  def tr(*txt)    log('TRACE: '+txt.map {|a| a.inspect}.join(", ")[0..100]) if $DEBUG ; txt[0] end
   
 end
 
